@@ -1,58 +1,92 @@
 import time
-import random 
+import random
 import modules.team_stats as team_stats
-from modules.art_intro import intro_art
+import modules.art_intro as display
 
 
+def starts_with_ball(teams):
+    return teams[random.randint(0, 1)]
 
-def is_goal():
-    print("Team chance to score")
-    return True if random.random() <= 0.5 else False
-     
-def should_try(team):
 
-    if random.random() <= team['chances']:
-        print(f"{team['name']} attempt for goal and...")
-        if is_goal():
-            print("Goool") 
-        else: 
-            print(" Failed")
+def ball_change_team(has_ball, teams):
+    if has_ball["name"] == teams[0]["name"]:
+        return teams[1]
+    else:
+        return teams[0]
+
+
+def something_happens():
+    if random.random() <= 0.3:
+        return True
+    else:
+        return False
+
+
+def is_pass(has_ball):
+    has_ball = has_ball["name"]
+    # change to team probalities
+    if random.random() <= 0.3:
+        print(has_ball, " successfull pass")
+        # pass +1
+        return True
+    else:
+        print(has_ball, " lost the ball")
+        return False
+
+
+def goal(team_with_ball):
+    # add +1 to team score
+    team_with_ball["score"] += 1
+    # display GOOOAL!
+    display.display_goal()
+    time.sleep(0.3)
+
     return
 
-def set_chances(teams):
-    teams[0]["chances"] = 0.1 if (teams[0]["attack"] - teams[1]["defense"]) <= 0 else (teams[0]["attack"] - teams[1]["defense"]) 
-    teams[1]["chances"] = 0.1 if (teams[1]["attack"] - teams[0]["defense"]) <= 0 else (teams[1]["attack"] - teams[0]["defense"])
-    print("Chances set: ",teams)
-    
-     
 
-def minute_by_minute(teams):
+def pass_counter_plus(team_with_ball):
+    team_with_ball["pass_counter"] += 1
+    return
 
-        match_time = 90
-        set_chances(teams)
-        for i in range(match_time):
 
-            print(f'Time: {i}')
+def minute_by_minute(teams, team_with_ball):
 
-            should_try(teams[0])
-            should_try(teams[1])
-            # chance of goal
+    match_time = 90
 
-            time.sleep(0.15)
+    for i in range(match_time):
+
+        print(f'Time: {i}')
+
+        # something happens?
+        if something_happens():
+            if is_pass(team_with_ball):
+                # pass +1 and check for goal
+                pass_counter_plus(team_with_ball)
+                if team_with_ball["pass_counter"] == 3:
+                    goal(team_with_ball)
+                    team_with_ball["pass_counter"] = 0
+                    ball_change_team(team_with_ball, teams)
+            else:
+                team_with_ball = ball_change_team(team_with_ball, teams)
+
+        time.sleep(0.15)
+
+    print("Final score ", teams[0]["name"], " ", teams[0]
+          ["score"], " : ", teams[1]["name"], " ", teams[1]["score"])
+
 
 def fut_simulator():
 
-#Intro art display
-    intro_art()
-#get names and generate stats
+    # Intro art display
+    display.intro_art()
+    # get names and generate stats
     teams = team_stats.team_generator()
     print(teams[0]["name"], " VS ", teams[1]["name"])
-#start the game
-    minute_by_minute(teams)
+# start the game
+    team_with_ball = starts_with_ball(teams)
+    print(team_with_ball["name"], "Starts with the ball")
 
-    
-
-    
+    minute_by_minute(teams, team_with_ball)
 
 
 fut_simulator()
